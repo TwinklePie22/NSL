@@ -115,14 +115,22 @@ void decrypt(const char *ciphertext, const char *key, char *plaintext) {
     *plaintext = '\0'; // Null-terminate the decrypted text
 }
 int main() {
-    const char *key = "QWERTYUIOPASDFGHJKLZXCVBNM";
+    char key[27]; // Key should have 26 letters plus a null
     char plaintext[256]; // Adjust size as needed
 
     // Get the plaintext from the user
     printf("Enter the message to encrypt: ");
     fgets(plaintext, sizeof(plaintext), stdin);
     plaintext[strcspn(plaintext, "\n")] = '\0'; // Remove the newline character
-
+    
+    printf("Enter the key (26 uppercase letters): "); // Get the key from the user
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0'; // Remove the newline character
+    if (strlen(key) != 26)
+    {
+        printf("Error: Key must be 26 characters long.\n");
+        return 1;
+    }
     // Allocate memory for ciphertext and decrypted text
     char *ciphertext = malloc(strlen(plaintext) + 1);
     char *decrypted = malloc(strlen(plaintext) + 1);
