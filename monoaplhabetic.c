@@ -33,10 +33,10 @@ void decrypt(char *ciphertext, char *key, char *plaintext)
     {
         if (isalpha(ciphertext[i]))
         {
-            char c = toupper(ciphertext[i]);
+            int offset = toupper(ciphertext[i]);
             for (int j = 0; j < 26; j++)
             {
-                if (key[j] == c)
+                if (key[j] == offset)
                 {
                     plaintext[i] = 'A' + j;
                     if (islower(ciphertext[i]))
