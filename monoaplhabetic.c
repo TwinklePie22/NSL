@@ -19,7 +19,7 @@ void encrypt(char *plaintext, char *key, char *ciphertext)
         }
         else
         {
-            ciphertext[i] = plaintext[i];
+            ciphertext[i] = plaintext[i]; // For blank spaces
         }
     }
     ciphertext[len] = '\0';
@@ -49,7 +49,7 @@ void decrypt(char *ciphertext, char *key, char *plaintext)
         }
         else
         {
-            plaintext[i] = ciphertext[i];
+            plaintext[i] = ciphertext[i];  // For blank spaces
         }
     }
     plaintext[len] = '\0';
