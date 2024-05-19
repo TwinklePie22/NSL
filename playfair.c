@@ -7,9 +7,10 @@
 void preprocess(char *key, char *new_key) {
     int flag[26] = {0}, len = strlen(key), j = 0;
     for (int i = 0; i < len; i++) {
-        if (key[i] != 'J' && !flag[toupper(key[i]) - 'A']) {
-            new_key[j++] = toupper(key[i]);
-            flag[toupper(key[i]) - 'A'] = 1;
+        char c = toupper(key[i]);
+        if (c != 'J' && !flag[c - 'A']) {
+            new_key[j++] = c;
+            flag[c - 'A'] = 1;
         }
     }
     for (int i = 0; i < 26; i++) {
@@ -22,16 +23,13 @@ void preprocess(char *key, char *new_key) {
 
 void formatMessage(char *message) {
     int len = strlen(message);
-    for (int i = 0; i < len; i++) {
-        message[i] = toupper(message[i]);
-    }
-    
     char formatted[MAX_SIZE];
     int idx = 0;
     for (int i = 0; i < len; i++) {
-        if (isalpha(message[i])) {
-            formatted[idx++] = message[i];
-            if (i + 1 < len && message[i] == message[i + 1]) {
+        char c = toupper(message[i]);
+        if (isalpha(c)) {
+            formatted[idx++] = c;
+            if (i + 1 < len && c == toupper(message[i + 1])) {
                 formatted[idx++] = 'X';
             }
         }
@@ -67,20 +65,47 @@ void encrypt(char *new_key, char *message, char *cipher) {
     cipher[idx] = '\0';
 }
 
+void decrypt(char *new_key, char *cipher, char *message) {
+    int len = strlen(cipher), idx = 0;
+    int r1, c1, r2, c2;
+    for (int i = 0; i < len; i += 2) {
+        r1 = strchr(new_key, cipher[i]) - new_key;
+        c1 = r1 % 5;
+        r1 /= 5;
+        r2 = strchr(new_key, cipher[i + 1]) - new_key;
+        c2 = r2 % 5;
+        r2 /= 5;
+        if (r1 == r2) {
+            message[idx++] = new_key[r1 * 5 + (c1 - 1 + 5) % 5];
+            message[idx++] = new_key[r2 * 5 + (c2 - 1 + 5) % 5];
+        } else if (c1 == c2) {
+            message[idx++] = new_key[((r1 - 1 + 5) % 5) * 5 + c1];
+            message[idx++] = new_key[((r2 - 1 + 5) % 5) * 5 + c2];
+        } else {
+            message[idx++] = new_key[r1 * 5 + c2];
+            message[idx++] = new_key[r2 * 5 + c1];
+        }
+    }
+    message[idx] = '\0';
+    // Remove padding 'X' if present at the end
+    if (message[idx - 1] == 'X') {
+        message[idx - 1] = '\0';
+    }
+}
+
 int main() {
-    char key[MAX_SIZE], message[MAX_SIZE], new_key[MAX_SIZE], cipher[MAX_SIZE];
+    char key[MAX_SIZE], message[MAX_SIZE], new_key[MAX_SIZE], cipher[MAX_SIZE], decrypted[MAX_SIZE];
     printf("Enter the key: ");
     fgets(key, MAX_SIZE, stdin);
     key[strcspn(key, "\n")] = '\0';
     printf("Enter the message: ");
     fgets(message, MAX_SIZE, stdin);
     message[strcspn(message, "\n")] = '\0';
-    
     preprocess(key, new_key);
     formatMessage(message);
     encrypt(new_key, message, cipher);
-    
     printf("The encrypted message is: %s\n", cipher);
+    decrypt(new_key, cipher, decrypted);
+    printf("The decrypted message is: %s\n", decrypted);
     return 0;
 }
-
