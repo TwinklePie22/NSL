@@ -28,7 +28,7 @@ void preprocess(char *key, char *new_key)
 
 void printKeyMatrix(char *new_key)
 {
-    printf("Key matrix:\n");
+    printf("The Key MATRIX:\n");
     for (int i = 0; i < 25; i++)
     {
         printf("%c ", new_key[i]);
@@ -142,9 +142,8 @@ int main()
     message[strcspn(message, "\n")] = '\0';
     preprocess(key, new_key);
 
-    printf("The key MATRIX is: \n");
     printKeyMatrix(new_key);    // Call to print the key matrix 
-    
+
     formatMessage(message);
     encrypt(new_key, message, cipher);
     printf("The encrypted message is: %s\n", cipher);
