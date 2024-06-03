@@ -85,5 +85,14 @@ int main() {
 
     encrypt(message, e, n);
 
+    // Decrypt the message
+    long long encrypted[MAX_SIZE];
+    int len = strlen(message);
+    for (int i = 0; i < len; i++) {
+        encrypted[i] = modExp(message[i], e, n);
+    }
+
+    decrypt(encrypted, len, d, n);
+    
     return 0;
 }
