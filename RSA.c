@@ -1,98 +1,105 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
 
-#define MAX_SIZE 100
+#define MAX_LEN 2048
 
-long long gcd(long long a, long long b) {
-    while (b != 0) {
-        long long t = b;
-        b = a % b;
-        a = t;
-    }
-    return a;
+void handle_errors() {
+    ERR_print_errors_fp(stderr);
+    abort();
 }
 
-long long modInverse(long long e, long long phi) {
-    long long m0 = phi, t, q;
-    long long x0 = 0, x1 = 1;
-    if (phi == 1) return 0;
-    while (e > 1) {
-        q = e / phi;
-        t = phi;
-        phi = e % phi;
-        e = t;
-        t = x0;
-        x0 = x1 - q * x0;
-        x1 = t;
-    }
-    if (x1 < 0) x1 += m0;
-    return x1;
-}
+RSA *generate_rsa_key() {
+    RSA *rsa = NULL;
+    BIGNUM *bne = NULL;
+    
+    int bits = 2048;
+    unsigned long e = RSA_F4;
 
-long long modExp(long long base, long long exp, long long mod) {
-    long long result = 1;
-    base = base % mod;
-    while (exp > 0) {
-        if (exp % 2 == 1) {
-            result = (result * base) % mod;
-        }
-        exp = exp >> 1;
-        base = (base * base) % mod;
+    bne = BN_new();
+    if (bne == NULL || BN_set_word(bne, e) != 1) {
+        handle_errors();
     }
-    return result;
-}
 
-void generateKeys(long long *n, long long *e, long long *d) {
-    long long p = 61, q = 53;
-    *n = p * q;
-    long long phi = (p - 1) * (q - 1);
-    *e = 17; // Common choice for e
-    *d = modInverse(*e, phi);
-}
-
-void encrypt(char *message, long long e, long long n) {
-    int len = strlen(message);
-    printf("Encrypted message: ");
-    for (int i = 0; i < len; i++) {
-        long long encryptedChar = modExp(message[i], e, n);
-        printf("%lld ", encryptedChar);
+    rsa = RSA_new();
+    if (rsa == NULL || RSA_generate_key_ex(rsa, bits, bne, NULL) != 1) {
+        handle_errors();
     }
-    printf("\n");
-}
 
-void decrypt(long long *encrypted, int size, long long d, long long n) {
-    printf("Decrypted message: ");
-    for (int i = 0; i < size; i++) {
-        long long decryptedChar = modExp(encrypted[i], d, n);
-        printf("%c", (char)decryptedChar);
-    }
-    printf("\n");
+    BN_free(bne);
+    return rsa;
 }
 
 int main() {
-    long long n, e, d;
-    generateKeys(&n, &e, &d);
+    RSA *rsa_A = NULL, *rsa_B = NULL;
+    unsigned char plaintext[MAX_LEN];
+    unsigned char ciphertext[MAX_LEN] = {0};
+    unsigned char decryptedtext[MAX_LEN] = {0};
+    int encrypted_len, decrypted_len;
 
-    printf("Public Key: (n: %lld, e: %lld)\n", n, e);
-    printf("Private Key: (n: %lld, d: %lld)\n", n, d);
+    // Initialize OpenSSL
+    ERR_load_crypto_strings();
+    OpenSSL_add_all_algorithms();
 
-    char message[MAX_SIZE];
-    printf("Enter the message to encrypt: ");
-    fgets(message, MAX_SIZE, stdin);
-    message[strcspn(message, "\n")] = '\0'; // Remove newline character if present
-
-    encrypt(message, e, n);
-
-    // Decrypt the message
-    long long encrypted[MAX_SIZE];
-    int len = strlen(message);
-    for (int i = 0; i < len; i++) {
-        encrypted[i] = modExp(message[i], e, n);
+    // Key Generation for User A
+    rsa_A = generate_rsa_key();
+    if (rsa_A == NULL) {
+        fprintf(stderr, "Error generating RSA key for User A\n");
+        handle_errors();
     }
 
-    decrypt(encrypted, len, d, n);
-    
+    // Key Generation for User B
+    rsa_B = generate_rsa_key();
+    if (rsa_B == NULL) {
+        fprintf(stderr, "Error generating RSA key for User B\n");
+        RSA_free(rsa_A);
+        handle_errors();
+    }
+
+    // Input message from user
+    printf("Enter the message to encrypt: ");
+    if (!fgets((char *)plaintext, MAX_LEN, stdin)) {
+        fprintf(stderr, "Error reading input\n");
+        RSA_free(rsa_A);
+        RSA_free(rsa_B);
+        EVP_cleanup();
+        ERR_free_strings();
+        return 1;
+    }
+
+    // Remove newline character from input
+    plaintext[strcspn((char *)plaintext, "\n")] = '\0';
+
+    // Encryption by User A (using B's public key)
+    encrypted_len = RSA_public_encrypt(strlen((char *)plaintext), plaintext, ciphertext, rsa_B, RSA_PKCS1_OAEP_PADDING);
+    if (encrypted_len == -1) {
+        fprintf(stderr, "Error encrypting message\n");
+        handle_errors();
+    }
+
+    // Decryption by User B
+    decrypted_len = RSA_private_decrypt(encrypted_len, ciphertext, decryptedtext, rsa_B, RSA_PKCS1_OAEP_PADDING);
+    if (decrypted_len == -1) {
+        fprintf(stderr, "Error decrypting message\n");
+        handle_errors();
+    }
+
+    printf("\nOriginal message: %s\n", plaintext);
+    printf("Encrypted message: ");
+    for (int i = 0; i < encrypted_len; i++) {
+        printf("%02x", ciphertext[i]);
+    }
+    printf("\n");
+    printf("Decrypted message: %s\n", decryptedtext);
+
+    // Clean up
+    RSA_free(rsa_A);
+    RSA_free(rsa_B);
+    EVP_cleanup();
+    ERR_free_strings();
+
     return 0;
 }
