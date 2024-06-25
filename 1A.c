@@ -1,57 +1,39 @@
-#include <openssl/aes.h>
-#include <openssl/rand.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-
-// Function to handle errors
-void handleErrors(void) {
-    fprintf(stderr, "An error occurred\n");
-    exit(1);
+#include <openssl/aes.h>
+// AES key for encryption and decryption (128-bit key)
+unsigned char aes_key[] = "0123456789abcdef";
+// Function to encrypt plaintext using AES
+void aes_encrypt(unsigned char *plaintext, unsigned char *ciphertext)
+{
+    AES_KEY key;
+    AES_set_encrypt_key(aes_key, 128, &key);
+    AES_encrypt(plaintext, ciphertext, &key);
 }
-
-// Function to encrypt a message
-void aes_encrypt(const unsigned char *message, unsigned char *key, unsigned char *iv, unsigned char *ciphertext) {
-    AES_KEY encryptKey;
-    AES_set_encrypt_key(key, 128, &encryptKey);
-    AES_cbc_encrypt(message, ciphertext, strlen((const char *)message) + 1, &encryptKey, iv, AES_ENCRYPT);
+// Function to decrypt ciphertext using AES
+void aes_decrypt(unsigned char *ciphertext, unsigned char *decryptedtext)
+{
+    AES_KEY key;
+    AES_set_decrypt_key(aes_key, 128, &key);
+    AES_decrypt(ciphertext, decryptedtext, &key);
 }
-
-// Function to decrypt a message
-void aes_decrypt(unsigned char *ciphertext, unsigned char *key, unsigned char *iv, unsigned char *plaintext) {
-    AES_KEY decryptKey;
-    AES_set_decrypt_key(key, 128, &decryptKey);
-    AES_cbc_encrypt(ciphertext, plaintext, AES_BLOCK_SIZE, &decryptKey, iv, AES_DECRYPT);
-}
-
-int main() {
-    // Message to encrypt
-    unsigned char message[] = "welcome to ISE";
-
-    // Buffer for the ciphertext and plaintext
-    unsigned char ciphertext[AES_BLOCK_SIZE * ((sizeof(message) + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE)];
-    unsigned char decryptedtext[AES_BLOCK_SIZE * ((sizeof(message) + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE)];
-
-    // Key and IV (Initialization Vector)
-    unsigned char key[16], iv[16];
-
-    // Generate random key and IV
-    if (!RAND_bytes(key, sizeof(key)) || !RAND_bytes(iv, sizeof(iv))) {
-        handleErrors();
-    }
-
-    printf("Original message: %s\n", message);
-
-    // Encrypt the message
-    aes_encrypt(message, key, iv, ciphertext);
+int main()
+{
+    unsigned char plaintext[] = "welcome to ISE";
+    unsigned char ciphertext[AES_BLOCK_SIZE]; // AES block size is 128 bits
+    unsigned char decryptedtext[AES_BLOCK_SIZE];
+    // Encrypt the plaintext
+    aes_encrypt(plaintext, ciphertext);
+    // Decrypt the ciphertext
+    aes_decrypt(ciphertext, decryptedtext);
+    printf("Original message: %s\n", plaintext);
     printf("Encrypted message: ");
-    for (int i = 0; i < sizeof(ciphertext); i++) {
+    for (int i = 0; i < AES_BLOCK_SIZE; i++)
+    {
         printf("%02x", ciphertext[i]);
     }
     printf("\n");
-
-    // Decrypt the message
-    aes_decrypt(ciphertext, key, iv, decryptedtext);
     printf("Decrypted message: %s\n", decryptedtext);
-
     return 0;
 }
