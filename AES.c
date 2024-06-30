@@ -1,98 +1,59 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <openssl/aes.h>
 
-#define MAX_PLAINTEXT_LENGTH 1024
-#define AES_BLOCK_SIZE 16
+#define AES_BLOCK_SIZE 16  // AES block size in bytes
 
-// Function to encrypt plaintext using AES
-void aes_encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key, unsigned char *ciphertext) {
+// AES encryption function
+void aes_encrypt(const unsigned char *plaintext, int plaintext_len, unsigned char *key, unsigned char *ciphertext)
+{
     AES_KEY aes_key;
     AES_set_encrypt_key(key, 128, &aes_key);
-    
-    unsigned char iv[AES_BLOCK_SIZE];
-    memset(iv, 0x00, AES_BLOCK_SIZE);  // Initialize IV to zero
-    
-    AES_cbc_encrypt(plaintext, ciphertext, plaintext_len, &aes_key, iv, AES_ENCRYPT);
+    AES_encrypt(plaintext, ciphertext, &aes_key);
 }
 
-// Function to decrypt ciphertext using AES
-void aes_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key, unsigned char *decryptedtext) {
+// AES decryption function
+void aes_decrypt(const unsigned char *ciphertext, int ciphertext_len, unsigned char *key, unsigned char *decryptedtext)
+{
     AES_KEY aes_key;
     AES_set_decrypt_key(key, 128, &aes_key);
-    
-    unsigned char iv[AES_BLOCK_SIZE];
-    memset(iv, 0x00, AES_BLOCK_SIZE);  // Initialize IV to zero
-    
-    AES_cbc_encrypt(ciphertext, decryptedtext, ciphertext_len, &aes_key, iv, AES_DECRYPT);
+    AES_decrypt(ciphertext, decryptedtext, &aes_key);
 }
 
-// Function to safely get input from user
-int get_input(char *prompt, unsigned char *buffer, int max_length) {
-    printf("%s", prompt);
-    int ch;
-    // Flush only the newline characters if they are the first in the buffer
-    while ((ch = getchar()) == '\n');
+int main()
+{
+    unsigned char key[AES_BLOCK_SIZE]; // 16-byte key (128-bit)
+    unsigned char plaintext[1024];     // Array to hold plaintext (max 1023 characters + null terminator)
+    unsigned char ciphertext[AES_BLOCK_SIZE];
+    unsigned char decryptedtext[AES_BLOCK_SIZE];
 
-    if (ch != EOF) {
-        ungetc(ch, stdin);  // Put back the first non-newline character
-    }
+    // Prompt user to enter plaintext
+    printf("Enter plaintext (max 1023 characters): ");
+    fgets(plaintext, sizeof(plaintext), stdin); // Read up to sizeof(plaintext) - 1 characters
 
-    if (fgets((char *)buffer, max_length, stdin) == NULL) {
-        fprintf(stderr, "Error reading input.\n");
-        return 0;
-    }
+    // Remove newline character from fgets input if present
+    if (strlen(plaintext) > 0 && plaintext[strlen(plaintext) - 1] == '\n')
+        plaintext[strlen(plaintext) - 1] = '\0';
 
-    // Remove any trailing newline character from the input
-    size_t len = strlen((char *)buffer);
-    if (len > 0 && buffer[len - 1] == '\n') {
-        buffer[len - 1] = '\0';
-    }
+    // Prompt user to enter encryption key
+    printf("Enter encryption key (exactly 16 characters): ");
+    scanf("%16s", key); // Limit key input to exactly 16 characters for AES 128-bit key
 
-    return strlen((char *)buffer);
-}
+    // Encrypt plaintext
+    aes_encrypt(plaintext, strlen((char *)plaintext), key, ciphertext);
 
-int main() {
-    unsigned char key[AES_BLOCK_SIZE + 1];  // +1 for null terminator
-    unsigned char plaintext[MAX_PLAINTEXT_LENGTH];
-    unsigned char ciphertext[MAX_PLAINTEXT_LENGTH + AES_BLOCK_SIZE];  // Allow for padding
-    unsigned char decryptedtext[MAX_PLAINTEXT_LENGTH + AES_BLOCK_SIZE];
-    int plaintext_len = 0;
-    
-    // Get key from user
-    do {
-        if (get_input("Enter 16-character AES key: ", key, sizeof(key)) != AES_BLOCK_SIZE) {
-            printf("Error: Key must be exactly 16 characters long. Please try again.\n");
-        }
-    } while (strlen((char *)key) != AES_BLOCK_SIZE);
+    // Decrypt ciphertext
+    aes_decrypt(ciphertext, AES_BLOCK_SIZE, key, decryptedtext);
 
-    // Get plaintext from user
-    do {
-        plaintext_len = get_input("Enter plaintext (max 1023 characters): ", plaintext, sizeof(plaintext));
-        if (plaintext_len == 0) {
-            fprintf(stderr, "Warning: Plaintext is empty. Please enter some text.\n");
-        }
-    } while (plaintext_len == 0);
-    
-    int padded_len = ((plaintext_len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE) * AES_BLOCK_SIZE;
-    
-    // Pad the plaintext
-    memset(plaintext + plaintext_len, 0, padded_len - plaintext_len);
-    
-    // Encrypt the plaintext
-    aes_encrypt(plaintext, padded_len, key, ciphertext);
-    
-    // Decrypt the ciphertext
-    aes_decrypt(ciphertext, padded_len, key, decryptedtext);
-    
-    printf("Original message: %s\n", plaintext);
-    printf("Encrypted message: ");
-    for (int i = 0; i < padded_len; i++) {
+    // Print results
+    printf("\nPlaintext: %s\n", plaintext);
+
+    printf("Ciphertext (hex): ");
+    for (int i = 0; i < AES_BLOCK_SIZE; ++i)
         printf("%02x", ciphertext[i]);
-    }
     printf("\n");
-    printf("Decrypted message: %s\n", decryptedtext);
-    
+
+    printf("Decrypted text: %s\n", decryptedtext);
+
     return 0;
 }
