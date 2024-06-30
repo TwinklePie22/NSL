@@ -30,7 +30,6 @@ void generateKeys(int p, int q, int *n, int *e, int *d)
 {
     *n = p * q;
     int phi = (p - 1) * (q - 1);
-    *e = 2; // Default e value
     while (*e < phi)
     {
         if (gcd(*e, phi) == 1)
@@ -90,6 +89,8 @@ int main()
 
     // Generate keys
     generateKeys(p, q, &n, &e, &d);
+    printf("Public Key: (n: %lld, e: %lld)\n", n, e);
+    printf("Private Key: (n: %lld, d: %lld)\n", n, d);
 
     // Input message from user
     printf("Enter the message to be encrypted: ");
