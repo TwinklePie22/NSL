@@ -30,7 +30,7 @@ int main()
     // Prompt user to enter plaintext
     printf("Enter plaintext (max 1023 characters): ");
     fgets(plaintext, sizeof(plaintext), stdin); // Read up to sizeof(plaintext) - 1 characters
-     plaintext[strcspn(plaintext, "\n")] = 0;    // Remove newline character
+    plaintext[strcspn(plaintext, "\n")] = 0;    // Remove newline character
 
     // Prompt user to enter encryption key
     printf("Enter encryption key (exactly 16 characters): ");
