@@ -3,106 +3,110 @@
 #include <string.h>
 #include <math.h>
 
-#define MAX_SIZE 100
-
-long long gcd(long long a, long long b)
+// Function to calculate GCD (Greatest Common Divisor)
+int gcd(int a, int b)
 {
-    while (b != 0)
-    {
-        long long t = b;
-        b = a % b;
-        a = t;
-    }
-    return a;
+    if (b == 0)
+        return a;
+    return gcd(b, a % b);
 }
 
-long long modInverse(long long e, long long phi)
+// Function to calculate modular exponentiation (a^b mod n)
+int modExp(int base, int exponent, int modulus)
 {
-    long long m0 = phi, t, q;
-    long long x0 = 0, x1 = 1;
-    if (phi == 1)
-        return 0;
-    while (e > 1)
+    int result = 1;
+    while (exponent > 0)
     {
-        q = e / phi;
-        t = phi;
-        phi = e % phi;
-        e = t;
-        t = x0;
-        x0 = x1 - q * x0;
-        x1 = t;
-    }
-
-    if (x1 < 0)
-        x1 += m0;
-    return x1;
-}
-
-long long modExp(long long base, long long exp, long long mod)
-{
-    long long result = 1;
-    base = base % mod;
-    while (exp > 0)
-    {
-        if (exp % 2 == 1)
-        {
-            result = (result * base) % mod;
-        }
-        exp = exp >> 1;
-        base = (base * base) % mod;
+        if (exponent % 2 == 1)
+            result = (result * base) % modulus;
+        base = (base * base) % modulus;
+        exponent = exponent / 2;
     }
     return result;
 }
-void generateKeys(long long *n, long long *e, long long *d)
+
+// Function to generate public and private keys
+void generateKeys(int p, int q, int *n, int *e, int *d)
 {
-    long long p = 17, q = 13;
     *n = p * q;
-    long long phi = (p - 1) * (q - 1);
-    *e = 17; // Common choice for e
-    *d = modInverse(*e, phi);
-}
-void encrypt(char *message, long long e, long long n)
-{
-    int len = strlen(message);
-    printf("Encrypted message: ");
-    for (int i = 0; i < len; i++)
+    int phi = (p - 1) * (q - 1);
+    *e = 2; // Default e value
+    while (*e < phi)
     {
-        long long encryptedChar = modExp(message[i], e, n);
-        printf("%c", (char)encryptedChar);
+        if (gcd(*e, phi) == 1)
+            break;
+        else
+            (*e)++;
     }
-    printf("\n");
+    // Calculate d such that (d * e) % phi == 1
+    int k = 2;
+    while (1)
+    {
+        *d = (1 + (k * phi)) / *e;
+        if ((*d * *e) % phi == 1)
+            break;
+        else
+            k++;
+    }
 }
 
-void decrypt(long long *encrypted, int size, long long d, long long n)
+// Function to encrypt a message
+void encrypt(char *message, int e, int n, int *encrypted)
 {
-    printf("Decrypted message: ");
-    for (int i = 0; i < size; i++)
+    int i;
+    for (i = 0; message[i] != '\0'; ++i)
     {
-        long long decryptedChar = modExp(encrypted[i], d, n);
-        printf("%c", (char)decryptedChar);
+        encrypted[i] = modExp(message[i], e, n);
     }
-    printf("\n");
+    encrypted[i] = -1; // End of encrypted message
+}
+
+// Function to decrypt a message
+void decrypt(int *encrypted, int d, int n, char *decrypted)
+{
+    int i;
+    for (i = 0; encrypted[i] != -1; ++i)
+    {
+        decrypted[i] = modExp(encrypted[i], d, n);
+    }
+    decrypted[i] = '\0'; // End of decrypted message
 }
 
 int main()
 {
-    long long n, e, d;
-    generateKeys(&n, &e, &d);
-    printf("Public Key: (n: %lld, e: %lld)\n", n, e);
-    printf("Private Key: (n: %lld, d: %lld)\n", n, d);
-    char message[MAX_SIZE];
-    printf("Enter the message to encrypt: ");
-    fgets(message, MAX_SIZE, stdin);
-    message[strcspn(message, "\n")] = '\0'; // Remove newline character if present
-    encrypt(message, e, n);
-    // Decrypt the message
+    int p, q, e;         // Prime numbers and public exponent
+    int n, d;            // Public and private keys
+    char message[100];   // Message to be encrypted
+    int encrypted[100];  // Encrypted message
+    char decrypted[100]; // Decrypted message
 
-    long long encrypted[MAX_SIZE];
-    int len = strlen(message);
-    for (int i = 0; i < len; i++)
+    // Input p, q, and e from user
+    printf("Enter the first prime number (p): ");
+    scanf("%d", &p);
+    printf("Enter the second prime number (q): ");
+    scanf("%d", &q);
+    printf("Enter the public exponent (e): ");
+    scanf("%d", &e);
+
+    // Generate keys
+    generateKeys(p, q, &n, &e, &d);
+
+    // Input message from user
+    printf("Enter the message to be encrypted: ");
+    scanf(" %[^\n]", message);
+
+    // Encrypt message
+    encrypt(message, e, n, encrypted);
+    printf("Encrypted message: ");
+    for (int i = 0; encrypted[i] != -1; ++i)
     {
-        encrypted[i] = modExp(message[i], e, n);
+        printf("%d ", encrypted[i]);
     }
-    decrypt(encrypted, len, d, n);
+    printf("\n");
+
+    // Decrypt message
+    decrypt(encrypted, d, n, decrypted);
+    printf("Decrypted message: %s\n", decrypted);
+
     return 0;
 }
