@@ -1,5 +1,5 @@
 ## Run AES 
 
-### > gcc -o program_name program_name.c -lssl -lcrypto
+### > gcc -o AES AES.c -lssl -lcrypto
 
-### > ./program_name
+### > ./AES
