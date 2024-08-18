@@ -6,51 +6,31 @@
 #define KEY 3 // Fixed key value
 
 // Function to encrypt the message using Caesar Cipher
-void encrypt(char *message)
+void cipher(char *message , int encrypt)
 {
     for (int i = 0; i < strlen(message); i++)
     {
         if (isalpha(message[i]))
         {
-            char offset = isupper(message[i]) ? 'A' : 'a';
-            message[i] = (message[i] - offset + KEY) % 26 + offset;
+            int offset = isupper(message[i]) ? 'A' : 'a';
+            message[i] = encrypt ? (message[i] - offset + KEY) % 26 + offset :(message[i] - offset - KEY + 26) % 26 + offset;
         }
     }
 }
-
-// Function to decrypt the message using Caesar Cipher
-void decrypt(char *message)
-{
-    for (int i = 0; i < strlen(message); i++)
-    {
-        if (isalpha(message[i]))
-        {
-            char offset = isupper(message[i]) ? 'A' : 'a';
-            message[i] = (message[i] - offset - KEY + 26) % 26 + offset;
-        }
-    }
-}
-
 int main()
 {
     char message[MAX_LEN];
 
     printf("Enter the message to encrypt: ");
-    fgets(message, MAX_LEN, stdin);
-    // Remove newline character if present
-    message[strcspn(message, "\n")] = '\0';
-
-    char encrypted[MAX_LEN];
-    strcpy(encrypted, message);
-
-    encrypt(encrypted);
-
+    fgets(message, MAX_LEN, stdin); 
+    message[strcspn(message, "\n")] = '\0';   // Remove newline character if present
     printf("Original message: %s\n", message);
-    printf("Encrypted message: %s\n", encrypted);
 
-    decrypt(encrypted);
+    cipher(message , 1);  //  Encrypt
+    printf("Encrypted message: %s\n", message);
 
-    printf("Decrypted message: %s\n", encrypted);
+    cipher(message , 0);  // Decrypt
+    printf("Decrypted message: %s\n",message);
 
     return 0;
-}
+} 
