@@ -2,6 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#define MAX_LEN 256
 // Function to encrypt the message using the monoalphabetic cipher
 void encrypt(char *plaintext, char *key, char *ciphertext)
 {
@@ -11,7 +12,7 @@ void encrypt(char *plaintext, char *key, char *ciphertext)
         if (isalpha(plaintext[i]))
         {
             int offset = toupper(plaintext[i]) - 'A';
-            ciphertext[i] = key[offset];
+            ciphertext[i] = key[offset];    //Replaces the plaintext character with the corresponding character from the key
             if (islower(plaintext[i]))
             {
                 ciphertext[i] = tolower(ciphertext[i]);
@@ -19,7 +20,7 @@ void encrypt(char *plaintext, char *key, char *ciphertext)
         }
         else
         {
-            ciphertext[i] = plaintext[i]; // For blank spaces
+            ciphertext[i] = plaintext[i];
         }
     }
     ciphertext[len] = '\0';
@@ -49,7 +50,7 @@ void decrypt(char *ciphertext, char *key, char *plaintext)
         }
         else
         {
-            plaintext[i] = ciphertext[i];  // For blank spaces
+            plaintext[i] = ciphertext[i];
         }
     }
     plaintext[len] = '\0';
@@ -57,17 +58,25 @@ void decrypt(char *ciphertext, char *key, char *plaintext)
 
 int main()
 {
-    char plaintext[100];
-    char key[] = "QWERTYUIOPASDFGHJKLZXCVBNM";
-    char ciphertext[100];
-    char decrypted[100];
+    char plaintext[MAX_LEN];
+    char key[MAX_LEN];
+    char ciphertext[MAX_LEN];
+    char decrypted[MAX_LEN];
 
     printf("Enter the plaintext: ");
-    fgets(plaintext, sizeof(plaintext), stdin);
+    fgets(plaintext, MAX_LEN, stdin);
     plaintext[strcspn(plaintext, "\n")] = '\0'; // Remove the newline character
 
     printf("Plaintext: %s\n", plaintext);
-
+    
+    printf("Enter the key (26 uppercase letters): "); // Get the key from the user
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0'; // Remove the newline character
+    if (strlen(key) != 26)
+    {
+        printf("Error: Key must be 26 characters long.\n");
+        return 1;
+    }
     encrypt(plaintext, key, ciphertext);
     printf("Ciphertext: %s\n", ciphertext);
 
