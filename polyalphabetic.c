@@ -13,13 +13,12 @@ void vigenere(char *text, char *key, char *result, int encrypt)
 
     for (i = 0, j = 0; i < textLen; ++i)
     {
-        char shift = tolower(key[j]) - 'a';
+        char shift = toupper(key[j]) - 'A';  // Convert key character to uppercase and calculate shift
         if (isalpha(text[i]))
         {
-            char base = islower(text[i]) ? 'a' : 'A';
-            char offset = encrypt ? (text[i] - base + shift) % 26 : (text[i] - base - shift + 26) % 26;
-            result[i] = base + offset;
-            j = (j + 1) % keyLen;
+            char offset = isupper(text[i]) ? 'A' : 'a';
+            result[i] = encrypt ? (text[i] - offset + shift) % 26 + offset : (text[i] - offset - shift + 26) % 26 +offset;
+            j = (j + 1) % keyLen;       // Move to the next character in the key
         }
         else
         {
@@ -27,7 +26,7 @@ void vigenere(char *text, char *key, char *result, int encrypt)
         }
     }
     result[i] = '\0';
-}
+} 
 
 int main()
 {
@@ -41,8 +40,9 @@ int main()
     plaintext[strcspn(plaintext, "\n")] = '\0'; // Remove newline character if present
 
     printf("Enter the key: ");
-    fgets(key, MAX_LENGTH, stdin);
-    key[strcspn(key, "\n")] = '\0'; // Remove newline character if present
+    // fgets(key, MAX_LENGTH, stdin);
+    // key[strcspn(key, "\n")] = '\0'; // Remove newline character if present
+    scanf("%[^\n]", key);
 
     vigenere(plaintext, key, encrypted, 1); // Encrypt
     printf("Encrypted text: %s\n", encrypted);
