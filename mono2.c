@@ -4,7 +4,7 @@
 
 #define MAX_LEN 256
 
-void mono(const char *text, const char *key, char *result, int encrypt)
+void mono(char *text, char *key, char *result, int encrypt)
 {
     int len = strlen(text);
     for (int i = 0; i < len; i++)
