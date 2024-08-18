@@ -20,10 +20,6 @@ void vigenere(char *text, char *key, char *result, int encrypt)
             result[i] = encrypt ? (text[i] - offset + shift) % 26 + offset : (text[i] - offset - shift + 26) % 26 +offset;
             j = (j + 1) % keyLen;       // Move to the next character in the key
         }
-        else
-        {
-            result[i] = text[i];
-        }
     }
     result[i] = '\0';
 } 
